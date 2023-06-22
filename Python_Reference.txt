@@ -1,0 +1,119 @@
+import os
+import time
+import cvzone
+import serial
+from cvzone.ClassificationModule import Classifier
+import cv2
+
+
+# Set up the serial connection
+ser = serial.Serial('COM11', 9600)  # Replace 'COM3' with the correct port for your Arduino
+cap = cv2.VideoCapture(1)
+classifier = Classifier('Resources/Model/keras_model.h5', 'Resources/Model/labels.txt')
+
+
+#define karanawa classIdbin aka
+classIDBin = 0
+
+# Import photo waste
+#imgWasteList = []
+#pathFolderWaste = "Resources/Waste"
+#pathList = os.listdir(pathFolderWaste)
+#for path in pathList:
+    #imgWasteList.append(cv2.imread(os.path.join(pathFolderWaste, path), cv2.IMREAD_UNCHANGED))
+
+
+# Import bin photo
+imgBinsList = []
+pathFolderBins = "Resources/Bins"
+pathList = os.listdir(pathFolderBins)
+for path in pathList:
+    imgBinsList.append(cv2.imread(os.path.join(pathFolderBins, path), cv2.IMREAD_UNCHANGED))
+
+
+
+
+#rawga kirima bin and west
+classDic = {0: None,
+            1: 1,
+            2: 2,
+            3: 3,
+            4: 0}
+
+
+
+while True:
+    _, img = cap.read()
+
+    # resize karana eka..............................
+
+    imgResize = cv2.resize(img, (650, 720))
+
+    #Background image eka.........................
+
+    imgBackground = cv2.imread('Resources/background.png')
+
+    predection = classifier.getPrediction(img)
+    classID = predection[1]
+    print(classID)
+    if classID != 0:
+        # print photo west wargaye......................................................................print
+        #imgBackground = cvzone.overlayPNG(imgBackground, imgWasteList[classID - 1], (895, 127))
+
+
+        classIDBin = classDic[classID]
+        # bin eke nama print karaganna one hinda saha arm .....................................
+        print(classIDBin)
+
+        if classIDBin == 0:
+            print("metal")
+            #cvzone.putTextRect(imgBackground, "Metal", (895, 374))
+            ser.write(b'A')
+
+
+
+
+        elif classIDBin == 1:
+            print("Plastic")
+            #cvzone.putTextRect(imgBackground, "Plastic", (895, 374))
+            ser.write(b'B')
+
+
+
+
+        elif classIDBin == 2:
+            print("Mix")
+            #cvzone.putTextRect(imgBackground, "Mix", (895, 374))
+            ser.write(b'C')
+
+
+
+        elif classIDBin == 3:
+            print("organic")
+            #cvzone.putTextRect(imgBackground, "organic", (895, 374))
+            ser.write(b'D')
+
+
+
+        # bin eke photo eka print ekata print.................................................................................
+        imgBackground = cvzone.overlayPNG(imgBackground, imgBinsList[classIDBin - 1], (895, 374))
+
+        
+    time.sleep(3)
+
+
+    #resize cam add to backgraund...........................................
+    imgBackground[0:0 + 720, 0:0 + 650] = imgResize
+
+    #display ekata normal display.....................
+
+    #cv2.imshow("Image", img)
+
+
+    #bacggraund eka athule display karanna ......................
+    cv2.imshow("Output", imgBackground)
+
+
+    cv2.waitKey(1)
+
+

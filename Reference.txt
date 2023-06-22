@@ -1,0 +1,426 @@
+import os
+import time
+import cvzone
+from cvzone.ClassificationModule import Classifier
+import cv2
+import  serial
+
+
+
+Capturing = True
+cap = cv2.VideoCapture(1)
+classifier = Classifier('keras_model.h5', 'labels.txt')
+
+# Import bin photos
+imgBinsList = []
+pathFolderBins = "Bins"
+pathList = os.listdir(pathFolderBins)
+for path in pathList:
+    imgBinsList.append(cv2.imread(os.path.join(pathFolderBins, path), cv2.IMREAD_UNCHANGED))
+
+# Raw class to bin mapping
+classDic = {0: None, 1: 1, 2: 2, 3: 3, 4: 0}
+# Configure the serial connection
+ser = serial.Serial('COM11', 9600)  # Replace 'COM3' with the appropriate serial port
+ser.timeout = 1
+
+while True:
+
+    ret, img = cap.read()
+
+    if not ret:
+        print("Error: Failed to capture frame from the camera.")
+        break
+
+    # Resize the image
+    imgResize = cv2.resize(img, (650, 720))
+
+    # Load the background image
+    imgBackground = cv2.imread('background.png')
+
+    if imgBackground is None:
+        print("Error: Failed to load the background image.")
+        break
+
+    predection = classifier.getPrediction(img)
+    classID = predection[1]
+    print(classID)
+    if classID != 0:
+        classIDBin = classDic[classID]
+        # Print the bin ID
+        print(classIDBin)
+
+        if(Capturing == True):
+            if classIDBin == 0:
+                print("Metal")
+                ser.write(b'A')
+                time.sleep(0.5)
+
+            elif classIDBin == 1:
+                print("Plastic")
+                ser.write(b'B')
+                time.sleep(0.5)
+
+            elif classIDBin == 2:
+                print("Mix")
+                ser.write(b'C')
+                time.sleep(0.5)
+
+            elif classIDBin == 3:
+                print("Organic")
+                ser.write(b'D')
+                time.sleep(0.5)
+
+        # Print the bin image
+        imgBackground = cvzone.overlayPNG(imgBackground, imgBinsList[classIDBin - 1], (895, 374))
+        line = ser.readline().decode().strip()
+        if line:
+            bulbOn = bool(int(line))
+            if bulbOn:
+                print("Bulb is ON")
+            else:
+                print("Bulb is OFF")
+
+    time.sleep(3)
+
+    # Add resized image to the background
+    imgBackground[0:0 + 720, 0:0 + 650] = imgResize
+
+    # Display the result
+    cv2.imshow("Output", imgBackground)
+    cv2.waitKey(1)
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
+#include <Servo.h>
+
+bool Motorsetup = false;
+Servo servo1;
+Servo servo2; //h
+Servo servo3; 
+Servo servo4;
+Servo servo5;
+int pos = 0;  
+ 
+
+
+int servoPin1 = 9;   
+int servoPin2 = 8;  
+int servoPin3 = 7; 
+int servoPin4 = 6; 
+int servoPin5 = 5;
+
+void setup() {
+
+  servo1.attach(servoPin1); 
+  servo2.attach(servoPin2);  
+  servo3.attach(servoPin3);
+  servo4.attach(servoPin4); 
+  servo5.attach(servoPin5); 
+  
+
+  Serial.begin(9600);       
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    char command = Serial.read();  
+
+    if (command == 'A') 
+    {
+      
+      METAL_Bin();
+
+      
+    } 
+    
+    else if (command == 'B') 
+    {
+      PLASTIC_Bin();
+   
+    }
+  
+     else if (command == 'C') 
+     {
+      MIX_Bin();
+
+    }
+     else if (command == 'D') 
+     {
+      ORGANIC_Bin();
+
+     
+    }
+
+    //..........................
+
+      else if (command == 'f') //test
+     {
+      servo2.write(50);
+      delay(15);
+      servo2.write(70);
+      delay(15);
+
+     
+    }
+
+      else if (command == 'g') 
+     {
+      servo2.write(70);
+
+     
+    }
+    //..................................
+
+    
+  }
+
+   Serial.println(Motorsetup);
+}
+
+void MIX_Bin()
+
+{
+      
+      Motorsetup = true;
+      Serial.print(Motorsetup); 
+      Serial.println();
+      servo4.write(120);
+      delay(1000);
+      servo2.write(90);
+      delay(1000);
+      servo1.write(80);
+      delay(1000);
+      
+      servo3.write(10);
+      delay(1000);
+
+      servo2.write(90);
+      delay(1000);
+      servo2.write(100);
+      delay(1000);
+      servo2.write(115);
+      delay(1000);
+      
+      servo3.write(140);
+      delay(1000);
+
+      delay(1000);
+      servo2.write(90);
+      delay(1000);
+      servo1.write(0);//base      
+      delay(100);
+     
+      
+      servo2.write(85);
+      delay(1000);
+      
+      
+      servo4.write(60);
+      delay(1000);
+
+      servo3.write(10);
+      delay(1000);
+      servo3.write(130);//grip
+      delay(1000);
+
+      
+      servo2.write(90);
+      delay(1000);
+      
+
+      servo4.write(120);
+      delay(1000);
+      
+      servo1.write(80);
+      delay(2000);
+      Motorsetup = false;
+      Serial.print(Motorsetup); 
+      Serial.println();
+
+}
+
+void METAL_Bin()
+
+{
+
+      Motorsetup = true;
+      Serial.print(Motorsetup); 
+      Serial.println();
+      servo4.write(120);
+      delay(1000);
+      servo2.write(90);
+      delay(1000);
+      servo1.write(80);
+      delay(1000);
+      
+      servo3.write(10);
+      delay(1000);
+
+      servo2.write(90);
+      delay(1000);
+      servo2.write(100);
+      delay(1000);
+      servo2.write(115);
+      delay(1000);
+      
+      servo3.write(120);
+      delay(1000);
+
+      delay(1000);
+      servo2.write(90);
+      delay(1000);
+      servo1.write(150);//base
+      delay(1000);
+     
+      
+      servo2.write(85);
+      delay(1000);
+      
+      
+      servo4.write(60);
+      delay(1000);
+
+      servo3.write(10);
+      delay(1000);
+      servo3.write(120);//grip
+      delay(1000);
+
+      
+      servo2.write(90);
+      delay(1000);
+      
+
+      servo4.write(120);
+      delay(1000);
+      
+      servo1.write(80);
+      delay(2000);
+      Motorsetup = false;
+      Serial.print(Motorsetup); 
+      Serial.println();
+
+}
+
+void PLASTIC_Bin()
+
+{
+      Motorsetup = true;
+      Serial.print(Motorsetup); 
+      Serial.println();
+      servo4.write(120);
+      delay(1000);
+      servo2.write(90);
+      delay(1000);
+      servo1.write(80);
+      delay(1000);
+      
+      servo3.write(10);
+      delay(1000);
+
+      servo2.write(90);
+      delay(1000);
+      servo2.write(100);
+      delay(1000);
+      servo2.write(115);
+      delay(1000);
+      
+      servo3.write(120);
+      delay(1000);
+
+      delay(1000);
+      servo2.write(90);
+      delay(1000);
+      servo1.write(170);//base
+      delay(1000);
+     
+      
+      servo2.write(85);
+      delay(1000);
+      
+      
+      servo4.write(60);
+      delay(1000);
+
+      servo3.write(10);
+      delay(1000);
+      servo3.write(120);//grip
+      delay(1000);
+
+      
+      servo2.write(90);
+      delay(1000);
+      
+
+      servo4.write(120);
+      delay(1000);
+      
+      servo1.write(80);
+      delay(2000);
+      Motorsetup = false;
+      Serial.print(Motorsetup); 
+      Serial.println();
+
+}
+
+void ORGANIC_Bin()
+
+{
+      Motorsetup = true;
+      Serial.print(Motorsetup); 
+      Serial.println();
+      servo4.write(120);
+      delay(1000);
+      servo2.write(90);
+      delay(1000);
+      servo1.write(80);
+      delay(1000);
+      
+      servo3.write(10);
+      delay(1000);
+
+      servo2.write(90);
+      delay(1000);
+      servo2.write(100);
+      delay(1000);
+      servo2.write(115);
+      delay(1000);
+      
+      servo3.write(120);
+      delay(1000);
+
+      delay(1000);
+      servo2.write(90);
+      delay(1000);
+      servo1.write(25);//base
+      delay(1000);
+     
+      
+      servo2.write(85);
+      delay(1000);
+      
+      
+      servo4.write(60);
+      delay(1000);
+
+      servo3.write(10);
+      delay(1000);
+      servo3.write(120);//grip
+      delay(1000);
+
+      
+      servo2.write(90);
+      delay(1000);
+      
+
+      servo4.write(120);
+      delay(1000);
+      
+      servo1.write(80);
+      delay(2000);
+      Motorsetup = false;
+      
+}

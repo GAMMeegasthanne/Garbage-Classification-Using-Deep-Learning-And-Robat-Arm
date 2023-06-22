@@ -1,0 +1,51 @@
+import serial
+
+# Initialize the serial connection
+arduino = serial.Serial('COM3', 9600)  # Change 'COM3' to match your Arduino's serial port
+arduino.flushInput()
+
+
+def read_light_status():
+    if arduino.inWaiting() > 0:
+        light_status = arduino.readline().decode().strip()
+        return bool(int(light_status))
+    return None
+
+while True:
+    light_on = read_light_status()
+    if light_on is not None:
+        if light_on:
+            print("Light is on")
+        else:
+            print("Light is off")
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+
+int lightPin = 13;  // Pin connected to the light
+bool isLightOn = false;  // Variable to store the status of the light
+
+void setup() {
+  pinMode(lightPin, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Read the status from Python
+  if (Serial.available() > 0) {
+    char command = Serial.read();
+    if (command == '1') {
+      digitalWrite(lightPin, HIGH);
+      isLightOn = true;
+    } else if (command == '0') {
+      digitalWrite(lightPin, LOW);
+      isLightOn = false;
+    }
+  }
+
+  // Send the status to Python
+  Serial.println(isLightOn);
+  delay(1000);
+}
+

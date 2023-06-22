@@ -1,0 +1,5 @@
+0 Nothing
+1 Plastic
+2 Metal
+3 Organic
+4 Mix
